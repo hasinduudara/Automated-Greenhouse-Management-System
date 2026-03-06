@@ -1,7 +1,8 @@
 spring:
   application:
     name: api-gateway
+  profiles:
+    active: local
   config:
     import:
       - optional:configserver:http://localhost:8888
-      - optional:file:.env
