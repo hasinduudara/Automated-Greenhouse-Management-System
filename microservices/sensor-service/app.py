@@ -69,7 +69,7 @@ def fetch_and_push_telemetry():
             print(f"🔄 Real Data Fetched -> Device: {device_id} | Temp: {temp}°C | Humidity: {humidity}%")
             
             # 3. Push telemetry data to Automation Service (The Pusher) [cite: 134]
-            # requests.post("http://localhost:8083/api/automation/process", json=latest_telemetry_data)
+            requests.post("http://localhost:8083/api/automation/process", json=latest_telemetry_data)
         else:
             print("❌ Failed to fetch telemetry data")
 
