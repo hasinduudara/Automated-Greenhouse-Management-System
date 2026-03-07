@@ -23,8 +23,8 @@ const Dashboard: React.FC = () => {
                 let hum = '--';
                 try {
                     const sensorRes = await apiClient.get('/sensors/latest');
-                    temp = sensorRes.data?.temperature || '--';
-                    hum = sensorRes.data?.humidity || '--';
+                    temp = sensorRes.data?.value?.temperature || '--';
+                    hum = sensorRes.data?.value?.humidity || '--';
                 } catch {
                     console.log("Sensor data not ready yet");
                 }
