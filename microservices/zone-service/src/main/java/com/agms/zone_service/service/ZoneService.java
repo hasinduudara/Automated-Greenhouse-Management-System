@@ -27,20 +27,15 @@ public class ZoneService {
         }
 
         // 1. Get token Login from External API
-//        LoginResponse loginResponse = ioTExternalClient.login(new LoginRequest("username", "123456"));
-//        String token = "Bearer " + loginResponse.getAccessToken();
+        LoginResponse loginResponse = ioTExternalClient.login(new LoginRequest("hasindu", "123456"));
+        String token = "Bearer " + loginResponse.getAccessToken();
 
         // 2. Register new device with External API using the obtained token and zone details
-//        DeviceRegistrationRequest deviceRequest = new DeviceRegistrationRequest(zone.getName() + "-Sensor", "TEMP-ZONE");
-//        Map<String, Object> deviceResponse = ioTExternalClient.registerDevice(token, deviceRequest);
+        DeviceRegistrationRequest deviceRequest = new DeviceRegistrationRequest(zone.getName() + "-Sensor", "TEMP-ZONE");
+        Map<String, Object> deviceResponse = ioTExternalClient.registerDevice(token, deviceRequest);
 
         // 3. Extract the deviceId from the response and set it to the Zone entity
-//        String externalDeviceId = (String) deviceResponse.get("deviceId");
-
-        //===========================================
-        // Mocking
-        String externalDeviceId = "MOCK-DEVICE-" + java.util.UUID.randomUUID().toString().substring(0, 8);
-        //===========================================
+        String externalDeviceId = (String) deviceResponse.get("deviceId");
         zone.setDeviceId(externalDeviceId);
 
         // 4. Save the Zone entity to the database and return it
