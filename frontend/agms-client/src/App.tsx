@@ -3,9 +3,7 @@ import MainLayout from './components/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Crops from './pages/Crops';
 import Automation from './pages/Automation';
-
-// Dummy components for other pages (We will create these properly later)
-const Zones = () => <div className="p-4"><h2>Zones Management Page (Coming Soon)</h2></div>;
+import Zones from './pages/Zones';
 
 function App() {
     return (
