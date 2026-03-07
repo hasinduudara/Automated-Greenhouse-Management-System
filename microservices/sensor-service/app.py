@@ -90,4 +90,4 @@ def get_latest_sensor_data():
     return jsonify(latest_telemetry_data), 200
 
 if __name__ == "__main__":
-    app.run(port=8082, debug=False)
+    app.run(host="0.0.0.0", port=8082, debug=False)

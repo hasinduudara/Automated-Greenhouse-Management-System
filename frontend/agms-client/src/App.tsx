@@ -1,35 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import MainLayout from './components/MainLayout';
+import Dashboard from './pages/Dashboard';
+
+// Dummy components for other pages (We will create these properly later)
+const Zones = () => <div className="p-4"><h2>Zones Management Page (Coming Soon)</h2></div>;
+const Crops = () => <div className="p-4"><h2>Crop Inventory Page (Coming Soon)</h2></div>;
+const Automation = () => <div className="p-4"><h2>Automation Logs Page (Coming Soon)</h2></div>;
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    return (
+        <BrowserRouter>
+            <Routes>
+                {/* MainLayout acts as a wrapper for all these routes */}
+                <Route path="/" element={<MainLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="zones" element={<Zones />} />
+                    <Route path="crops" element={<Crops />} />
+                    <Route path="automation" element={<Automation />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
-export default App
+export default App;
