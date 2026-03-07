@@ -10,7 +10,9 @@ app = Flask(__name__)
 eureka_client.init(
     eureka_server="http://localhost:8761/eureka",
     app_name="SENSOR-SERVICE",
-    instance_port=8082
+    instance_port=8082,
+    instance_host="localhost",
+    instance_ip="127.0.0.1"
 )
 
 BASE_URL = "http://104.211.95.241:8080/api"
