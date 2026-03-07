@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../api/axiosConfig';
 import { Sprout, Plus, Edit2, Trash2, X } from 'lucide-react';
 
-// MongoDB Crop Document Interface
 interface Crop {
     _id: string;
     cropName: string;
@@ -15,12 +14,10 @@ const Crops: React.FC = () => {
     const [crops, setCrops] = useState<Crop[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Add New Crop
     const [showModal, setShowModal] = useState(false);
     const [newCropName, setNewCropName] = useState('');
     const [newBatchId, setNewBatchId] = useState('');
 
-    // Get Crops Inventory
     const fetchCrops = async () => {
         try {
             const response = await apiClient.get('/crops');
@@ -36,7 +33,23 @@ const Crops: React.FC = () => {
         fetchCrops();
     }, []);
 
-    // Save Crop Function
+    const handleOpenModal = () => {
+        let nextId = "BATCH-001";
+
+        if (crops.length > 0) {
+            const batchNumbers = crops.map(c => {
+                const parts = c.batchId.split('-');
+                return parts.length === 2 ? parseInt(parts[1]) : 0;
+            });
+            const maxNumber = Math.max(...batchNumbers);
+            nextId = `BATCH-${String(maxNumber + 1).padStart(3, '0')}`;
+        }
+
+        setNewBatchId(nextId);
+        setNewCropName('');
+        setShowModal(true);
+    };
+
     const handleAddCrop = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -46,11 +59,19 @@ const Crops: React.FC = () => {
             });
             fetchCrops();
             setShowModal(false);
-            setNewCropName('');
-            setNewBatchId('');
         } catch (error) {
             console.error("❌ Error adding crop:", error);
             alert("Failed to add crop. Please check console.");
+        }
+    };
+
+    const handleStatusChange = async (id: string, newStatus: string) => {
+        try {
+            await apiClient.put(`/crops/${id}/status`, { status: newStatus });
+            fetchCrops();
+        } catch (error) {
+            console.error("❌ Error updating status:", error);
+            alert("Failed to update crop status.");
         }
     };
 
@@ -59,14 +80,13 @@ const Crops: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">Crops Inventory</h2>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={handleOpenModal}
                     className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                     <Plus className="w-5 h-5 mr-1" /> Add New Crop
                 </button>
             </div>
 
-            {/* Crops Table */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {loading ? (
                     <div className="p-6 text-center text-gray-500">Loading crops...</div>
@@ -95,12 +115,18 @@ const Crops: React.FC = () => {
                                     </td>
                                     <td className="p-4 text-gray-700">{crop.batchId}</td>
                                     <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold
-                        ${crop.status === 'SEEDLING' ? 'bg-yellow-100 text-yellow-800' :
-                          crop.status === 'VEGETATIVE' ? 'bg-blue-100 text-blue-800' :
-                              'bg-green-100 text-green-800'}`}>
-                        {crop.status}
-                      </span>
+                                        <select
+                                            value={crop.status}
+                                            onChange={(e) => handleStatusChange(crop._id, e.target.value)}
+                                            className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer outline-none border-2
+                          ${crop.status === 'SEEDLING' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                                crop.status === 'VEGETATIVE' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                                    'bg-green-100 text-green-800 border-green-200'}`}
+                                        >
+                                            <option value="SEEDLING">SEEDLING</option>
+                                            <option value="VEGETATIVE">VEGETATIVE</option>
+                                            <option value="HARVESTED">HARVESTED</option>
+                                        </select>
                                     </td>
                                     <td className="p-4 text-gray-700">{new Date(crop.plantedAt).toLocaleDateString()}</td>
                                     <td className="p-4 flex justify-center space-x-3">
@@ -115,13 +141,12 @@ const Crops: React.FC = () => {
                 )}
             </div>
 
-            {/* Add New Crop Modal (Pop-up) */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-5">
                             <h3 className="text-xl font-bold text-gray-800">Add New Crop</h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700">
+                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:bg-gray-100 p-1 rounded-full transition-colors">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
@@ -133,33 +158,32 @@ const Crops: React.FC = () => {
                                     type="text"
                                     value={newCropName}
                                     onChange={(e) => setNewCropName(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                                     placeholder="e.g., Tomatoes"
+                                    autoFocus
                                     required
                                 />
                             </div>
                             <div className="mb-6">
-                                <label className="block text-gray-700 text-sm font-bold mb-2">Batch ID</label>
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Batch ID (Auto-Generated)</label>
                                 <input
                                     type="text"
                                     value={newBatchId}
-                                    onChange={(e) => setNewBatchId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
-                                    placeholder="e.g., BATCH-002"
-                                    required
+                                    readOnly
+                                    className="w-full px-4 py-2 bg-gray-100 border border-gray-300 text-gray-600 rounded-lg cursor-not-allowed"
                                 />
                             </div>
-                            <div className="flex justify-end">
+                            <div className="flex justify-end space-x-3">
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="mr-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium"
+                                    className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium transition-colors shadow-sm"
                                 >
                                     Save Crop
                                 </button>
