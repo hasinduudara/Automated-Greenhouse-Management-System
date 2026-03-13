@@ -39,7 +39,7 @@ const Zones: React.FC = () => {
         fetchZones();
     }, []);
 
-    // 1. Add Modal 
+    // 1. Add Modal
     const handleOpenAddModal = () => {
         setEditZoneId(null);
         setNewZoneName('');
