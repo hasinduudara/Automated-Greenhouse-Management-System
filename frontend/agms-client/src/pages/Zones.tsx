@@ -16,6 +16,9 @@ const Zones: React.FC = () => {
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
+    const [editZoneId, setEditZoneId] = useState<number | null>(null); // Edit කරනවද නැද්ද කියලා අඳුරගන්න
+
+    // Form State
     const [newZoneName, setNewZoneName] = useState('');
     const [newMinTemp, setNewMinTemp] = useState<number | ''>('');
     const [newMaxTemp, setNewMaxTemp] = useState<number | ''>('');
@@ -36,26 +39,62 @@ const Zones: React.FC = () => {
         fetchZones();
     }, []);
 
-    // Function to handle adding a new zone
-    const handleAddZone = async (e: React.FormEvent) => {
+    // 1. Add Modal 
+    const handleOpenAddModal = () => {
+        setEditZoneId(null);
+        setNewZoneName('');
+        setNewMinTemp('');
+        setNewMaxTemp('');
+        setErrorMsg('');
+        setShowModal(true);
+    };
+    // Edite Modal
+    const handleOpenEditModal = (zone: Zone) => {
+        setEditZoneId(zone.id);
+        setNewZoneName(zone.name);
+        setNewMinTemp(zone.minTemp);
+        setNewMaxTemp(zone.maxTemp);
+        setErrorMsg('');
+        setShowModal(true);
+    };
+
+    // 3. Delete Function
+    const handleDeleteZone = async (id: number) => {
+        if (window.confirm("Are you sure you want to delete this zone?")) {
+            try {
+                await apiClient.delete(`/zones/${id}`);
+                fetchZones();
+            } catch (error) {
+                console.error("Error deleting zone:", error);
+                alert("Failed to delete the zone. Please check the console.");
+            }
+        }
+    };
+
+    // 4. Save (Add) and Update (Edit)
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg('');
 
         // Validation: Min Temp must be less than Max Temp
         if (newMinTemp !== '' && newMaxTemp !== '' && Number(newMinTemp) >= Number(newMaxTemp)) {
-            setErrorMsg('Minimum temperature must be less than maximum temperature.');
+            setErrorMsg('Minimum temperature must be strictly less than maximum temperature.');
             return;
         }
 
-        try {
-            // POST request to API Gateway which routes to Zone Service [cite: 125, 127]
-            await apiClient.post('/zones', {
-                name: newZoneName,
-                minTemp: Number(newMinTemp),
-                maxTemp: Number(newMaxTemp)
-            });
+        const payload = {
+            name: newZoneName,
+            minTemp: Number(newMinTemp),
+            maxTemp: Number(newMaxTemp)
+        };
 
-            // Refresh list and close modal
+        try {
+            if (editZoneId) {
+                await apiClient.put(`/zones/${editZoneId}`, payload);
+            } else {
+                await apiClient.post('/zones', payload);
+            }
+
             fetchZones();
             setShowModal(false);
 
@@ -63,9 +102,10 @@ const Zones: React.FC = () => {
             setNewZoneName('');
             setNewMinTemp('');
             setNewMaxTemp('');
+            setEditZoneId(null);
         } catch (error) {
-            console.error("Error adding zone:", error);
-            setErrorMsg("Failed to add zone. Please check console.");
+            console.error("Error saving zone:", error);
+            setErrorMsg("Failed to save zone. Please check console.");
         }
     };
 
@@ -77,7 +117,7 @@ const Zones: React.FC = () => {
                     Greenhouse Zones Management
                 </h2>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={handleOpenAddModal}
                     className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                     <Plus className="w-5 h-5 mr-1" /> Add New Zone
@@ -121,10 +161,21 @@ const Zones: React.FC = () => {
                                         {zone.deviceId}
                                     </td>
                                     <td className="p-4 flex justify-center space-x-3">
-                                        <button className="text-blue-500 hover:text-blue-700 transition-colors" title="Edit Zone">
+                                        {/* Edit Button */}
+                                        <button
+                                            onClick={() => handleOpenEditModal(zone)}
+                                            className="text-blue-500 hover:text-blue-700 transition-colors"
+                                            title="Edit Zone"
+                                        >
                                             <Edit2 className="w-5 h-5" />
                                         </button>
-                                        <button className="text-red-500 hover:text-red-700 transition-colors" title="Delete Zone">
+
+                                        {/* Delete Button */}
+                                        <button
+                                            onClick={() => handleDeleteZone(zone.id)}
+                                            className="text-red-500 hover:text-red-700 transition-colors"
+                                            title="Delete Zone"
+                                        >
                                             <Trash2 className="w-5 h-5" />
                                         </button>
                                     </td>
@@ -136,12 +187,13 @@ const Zones: React.FC = () => {
                 )}
             </div>
 
-            {/* Add New Zone Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
                         <div className="flex justify-between items-center mb-5">
-                            <h3 className="text-xl font-bold text-gray-800">Add New Zone</h3>
+                            <h3 className="text-xl font-bold text-gray-800">
+                                {editZoneId ? 'Edit Zone' : 'Add New Zone'}
+                            </h3>
                             <button onClick={() => setShowModal(false)} className="text-gray-500 hover:bg-gray-100 p-1 rounded-full transition-colors">
                                 <X className="w-6 h-6" />
                             </button>
@@ -153,14 +205,14 @@ const Zones: React.FC = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleAddZone}>
+                        <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label className="block text-gray-700 text-sm font-bold mb-2">Zone Name</label>
                                 <input
                                     type="text"
                                     value={newZoneName}
                                     onChange={(e) => setNewZoneName(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                     placeholder="e.g., Tomato Zone"
                                     autoFocus
                                     required
@@ -174,7 +226,7 @@ const Zones: React.FC = () => {
                                         step="0.1"
                                         value={newMinTemp}
                                         onChange={(e) => setNewMinTemp(e.target.value === '' ? '' : Number(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                         placeholder="e.g., 20"
                                         required
                                     />
@@ -186,7 +238,7 @@ const Zones: React.FC = () => {
                                         step="0.1"
                                         value={newMaxTemp}
                                         onChange={(e) => setNewMaxTemp(e.target.value === '' ? '' : Number(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                         placeholder="e.g., 30"
                                         required
                                     />
@@ -202,9 +254,9 @@ const Zones: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium transition-colors shadow-sm"
+                                    className={`${editZoneId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white px-5 py-2 rounded-lg font-medium transition-colors shadow-sm`}
                                 >
-                                    Save Zone
+                                    {editZoneId ? 'Update Zone' : 'Save Zone'}
                                 </button>
                             </div>
                         </form>

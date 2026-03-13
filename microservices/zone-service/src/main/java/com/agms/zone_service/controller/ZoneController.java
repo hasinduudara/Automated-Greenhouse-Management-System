@@ -57,4 +57,24 @@ public class ZoneController {
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Zone> updateZone(@PathVariable Long id, @RequestBody Zone zoneDetails) {
+        return zoneRepository.findById(id)
+                .map(existingZone -> {
+                    // Update the details
+                    existingZone.setName(zoneDetails.getName());
+                    existingZone.setMinTemp(zoneDetails.getMinTemp());
+                    existingZone.setMaxTemp(zoneDetails.getMaxTemp());
+
+                    // Validation: Min Temp < Max Temp
+                    if (existingZone.getMinTemp() >= existingZone.getMaxTemp()) {
+                        throw new IllegalArgumentException("Minimum temperature must be strictly less than maximum temperature.");
+                    }
+
+                    Zone updatedZone = zoneRepository.save(existingZone);
+                    return new ResponseEntity<>(updatedZone, HttpStatus.OK);
+                })
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
 }
