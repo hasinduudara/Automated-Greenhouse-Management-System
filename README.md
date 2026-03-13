@@ -22,6 +22,8 @@ This project follows a Polyglot Microservices Architecture, utilizing the best t
 
 ```text
 Automated-Greenhouse-Management-System/
+├── docs/
+│   └── eureka-dashboard.png      # Screenshot of registered services
 ├── frontend/
 │   └── agms-client/              # React frontend application
 ├── infrastructure/
